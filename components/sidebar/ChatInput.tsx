@@ -1,13 +1,16 @@
 'use client';
 
 import { useState, FormEvent, KeyboardEvent } from 'react';
-import { useGenerationStore, useConversationStore } from '@/store';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useGenerationStore } from '@/store';
 import { ArrowUpIcon } from '@/components/ui/Icons';
+import toast from 'react-hot-toast';
 
 export function ChatInput() {
   const [input, setInput] = useState('');
   const { isGenerating, startGeneration } = useGenerationStore();
-  const { currentConversation } = useConversationStore();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -16,7 +19,35 @@ export function ChatInput() {
     const prompt = input.trim();
     setInput('');
 
-    await startGeneration(prompt, currentConversation?.id);
+    // Get conversationId from URL
+    let conversationId = searchParams.get('conversationId');
+
+    // If no conversationId, create a new conversation
+    if (!conversationId) {
+      try {
+        const response = await fetch('/api/conversations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: prompt.substring(0, 100) }),
+        });
+
+        if (response.ok) {
+          const newConversation = await response.json();
+          conversationId = newConversation.id;
+          // Update URL with new conversationId
+          router.replace(`/chat?conversationId=${conversationId}`);
+        } else {
+          toast.error('Failed to create conversation');
+          return;
+        }
+      } catch (error) {
+        console.error('Error creating conversation:', error);
+        toast.error('Failed to create conversation');
+        return;
+      }
+    }
+
+    await startGeneration(prompt, conversationId || undefined);
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {

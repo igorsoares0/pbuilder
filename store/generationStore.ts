@@ -24,6 +24,7 @@ interface GenerationStore {
 
   // Async actions
   startGeneration: (prompt: string, conversationId?: string) => Promise<void>;
+  loadConversation: (conversationId: string) => Promise<void>;
 }
 
 export const useGenerationStore = create<GenerationStore>((set, get) => ({
@@ -146,6 +147,57 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
       set({
         error: error instanceof Error ? error.message : 'Unknown error',
         isGenerating: false,
+      });
+    }
+  },
+
+  // Load existing conversation
+  loadConversation: async (conversationId: string) => {
+    console.log('📖 Loading conversation:', conversationId);
+    set({
+      isGenerating: false,
+      streamingContent: '',
+      thinkingSteps: [],
+      currentStep: null,
+      generatedCode: null,
+      error: null,
+    });
+
+    try {
+      const response = await fetch(`/api/conversations/${conversationId}/messages`);
+
+      if (!response.ok) {
+        throw new Error('Failed to load conversation');
+      }
+
+      const messages = await response.json();
+      console.log('📨 Loaded messages:', messages.length);
+
+      // Find the last assistant message with generated code
+      const lastAssistantMessage = messages
+        .reverse()
+        .find((msg: any) => msg.role === 'assistant' && msg.generatedCode);
+
+      if (lastAssistantMessage) {
+        // Load thinking steps if available
+        if (lastAssistantMessage.thinkingSteps) {
+          const steps = Array.isArray(lastAssistantMessage.thinkingSteps)
+            ? lastAssistantMessage.thinkingSteps
+            : [];
+          set({ thinkingSteps: steps });
+        }
+
+        // Load generated code
+        if (lastAssistantMessage.generatedCode) {
+          set({ generatedCode: lastAssistantMessage.generatedCode });
+        }
+      }
+
+      console.log('✅ Conversation loaded successfully');
+    } catch (error) {
+      console.error('❌ Error loading conversation:', error);
+      set({
+        error: error instanceof Error ? error.message : 'Failed to load conversation',
       });
     }
   },

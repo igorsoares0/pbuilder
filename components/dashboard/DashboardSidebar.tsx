@@ -1,17 +1,46 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
+
+interface Conversation {
+  id: string;
+  title: string;
+  createdAt: Date;
+}
 
 export function DashboardSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const menuItems = [
     { label: 'Chat', href: '/chat' },
     { label: 'Projects', href: '/projects' },
     { label: 'Settings', href: '/settings' },
   ];
+
+  useEffect(() => {
+    fetchConversations();
+  }, []);
+
+  const fetchConversations = async () => {
+    try {
+      const response = await fetch('/api/conversations');
+
+      if (response.ok) {
+        const data = await response.json();
+        setConversations(data);
+      }
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <aside className="fixed top-0 left-0 bottom-0 w-72 bg-[#f0efeb] border-r border-[#161413] flex flex-col">
@@ -24,13 +53,16 @@ export function DashboardSidebar() {
 
       {/* New Chat Button */}
       <div className="px-6 mb-6">
-        <Link
-          href="/chat"
+        <button
+          onClick={() => {
+            // Clear any existing conversation state before navigating
+            router.push('/chat');
+          }}
           className="block w-full py-3 bg-[#f27b2f] border-[1.4px] border-black rounded-md text-center font-semibold text-[#161413] hover:bg-[#e06a1f] transition-colors"
           style={{ fontFamily: 'Geist Mono, monospace' }}
         >
           New Chat
-        </Link>
+        </button>
       </div>
 
       {/* Navigation Menu */}
@@ -57,20 +89,27 @@ export function DashboardSidebar() {
           Recent chats
         </h3>
         <div className="space-y-1">
-          {[
-            'Landing page redesign',
-            'Landing page digital marketing',
-            'Dashboard',
-            'New dashboard for HR',
-          ].map((chat, index) => (
-            <button
-              key={index}
-              className="block w-full text-left px-3 py-2 text-sm text-[#161413] hover:bg-[#e5e4e0] rounded-md transition-colors"
-              style={{ fontFamily: 'Geist, sans-serif' }}
-            >
-              {chat}
-            </button>
-          ))}
+          {isLoading ? (
+            <p className="text-xs text-[#161413] opacity-50 px-3 py-2" style={{ fontFamily: 'Geist, sans-serif' }}>
+              Loading...
+            </p>
+          ) : conversations.length === 0 ? (
+            <p className="text-xs text-[#161413] opacity-50 px-3 py-2" style={{ fontFamily: 'Geist, sans-serif' }}>
+              No chats yet. Start a new conversation!
+            </p>
+          ) : (
+            conversations.map((conversation) => (
+              <button
+                key={conversation.id}
+                onClick={() => router.push(`/chat?conversationId=${conversation.id}`)}
+                className="block w-full text-left px-3 py-2 text-sm text-[#161413] hover:bg-[#e5e4e0] rounded-md transition-colors truncate"
+                style={{ fontFamily: 'Geist, sans-serif' }}
+                title={conversation.title}
+              >
+                {conversation.title}
+              </button>
+            ))
+          )}
         </div>
       </div>
 

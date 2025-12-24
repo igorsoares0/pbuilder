@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getConversations, createConversation, MOCK_USER_ID } from '@/lib/db/queries';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth/auth.config';
+import { getConversations, createConversation } from '@/lib/db/queries';
 
 export async function GET() {
   try {
-    const conversations = await getConversations(MOCK_USER_ID);
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const conversations = await getConversations(session.user.id);
     return NextResponse.json(conversations);
   } catch (error) {
-    console.error('Error fetching conversations:', error);
+    console.error('❌ Error fetching conversations:', error);
     return NextResponse.json(
       { error: 'Failed to fetch conversations' },
       { status: 500 }
@@ -16,6 +24,12 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { title } = await req.json();
 
     if (!title || typeof title !== 'string') {
@@ -25,7 +39,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const conversation = await createConversation(MOCK_USER_ID, title);
+    const conversation = await createConversation(session.user.id, title);
 
     if (!conversation) {
       return NextResponse.json(
