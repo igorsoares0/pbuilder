@@ -1,6 +1,15 @@
 import { create } from 'zustand';
 import { ThinkingStep } from '@/types/conversation';
 
+interface ConversationMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  thinkingSteps?: ThinkingStep[];
+  generatedCode?: string;
+  createdAt: Date;
+}
+
 interface GenerationStore {
   // State
   isGenerating: boolean;
@@ -9,6 +18,7 @@ interface GenerationStore {
   currentStep: ThinkingStep | null;
   generatedCode: string | null;
   error: string | null;
+  conversationHistory: ConversationMessage[];
 
   // Actions
   setGenerating: (isGenerating: boolean) => void;
@@ -20,6 +30,8 @@ interface GenerationStore {
   setCurrentStep: (step: ThinkingStep | null) => void;
   setGeneratedCode: (code: string | null) => void;
   setError: (error: string | null) => void;
+  setConversationHistory: (history: ConversationMessage[]) => void;
+  addMessageToHistory: (message: ConversationMessage) => void;
   resetGeneration: () => void;
 
   // Async actions
@@ -35,6 +47,7 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
   currentStep: null,
   generatedCode: null,
   error: null,
+  conversationHistory: [],
 
   // Sync actions
   setGenerating: (isGenerating) => set({ isGenerating }),
@@ -56,6 +69,11 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
     set({ generatedCode: code });
   },
   setError: (error) => set({ error }),
+  setConversationHistory: (history) => set({ conversationHistory: history }),
+  addMessageToHistory: (message) =>
+    set((state) => ({
+      conversationHistory: [...state.conversationHistory, message],
+    })),
   resetGeneration: () =>
     set({
       isGenerating: false,
@@ -64,19 +82,30 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
       currentStep: null,
       generatedCode: null,
       error: null,
+      conversationHistory: [],
     }),
 
   // Async actions
   startGeneration: async (prompt: string, conversationId?: string) => {
     console.log('🚀 Starting generation with prompt:', prompt);
-    set({
+
+    // Add user message to history
+    const userMessage: ConversationMessage = {
+      id: `temp-user-${Date.now()}`,
+      role: 'user',
+      content: prompt,
+      createdAt: new Date(),
+    };
+
+    set((state) => ({
+      conversationHistory: [...state.conversationHistory, userMessage],
       isGenerating: true,
       streamingContent: '',
       thinkingSteps: [],
       currentStep: null,
       generatedCode: null,
       error: null,
-    });
+    }));
 
     try {
       const response = await fetch('/api/ai/generate', {
@@ -124,11 +153,23 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
                 }));
               } else if (data.type === 'complete') {
                 console.log('✨ Generation complete! Code length:', data.content?.length);
-                set({
+
+                // Add assistant message to history
+                const assistantMessage: ConversationMessage = {
+                  id: `temp-assistant-${Date.now()}`,
+                  role: 'assistant',
+                  content: data.content,
+                  thinkingSteps: get().thinkingSteps,
+                  generatedCode: data.content,
+                  createdAt: new Date(),
+                };
+
+                set((state) => ({
+                  conversationHistory: [...state.conversationHistory, assistantMessage],
                   generatedCode: data.content,
                   isGenerating: false,
                   currentStep: null,
-                });
+                }));
               } else if (data.type === 'error') {
                 console.error('❌ Error from API:', data.content);
                 set({
@@ -161,6 +202,7 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
       currentStep: null,
       generatedCode: null,
       error: null,
+      conversationHistory: [],
     });
 
     try {
@@ -173,25 +215,26 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
       const messages = await response.json();
       console.log('📨 Loaded messages:', messages.length);
 
-      // Find the last assistant message with generated code
+      // Convert messages to conversation history
+      const history: ConversationMessage[] = messages.map((msg: any) => ({
+        id: msg.id,
+        role: msg.role,
+        content: msg.content,
+        thinkingSteps: msg.thinkingSteps || undefined,
+        generatedCode: msg.generatedCode || undefined,
+        createdAt: new Date(msg.createdAt),
+      }));
+
+      // Find the last assistant message with generated code for preview
       const lastAssistantMessage = messages
         .reverse()
         .find((msg: any) => msg.role === 'assistant' && msg.generatedCode);
 
-      if (lastAssistantMessage) {
-        // Load thinking steps if available
-        if (lastAssistantMessage.thinkingSteps) {
-          const steps = Array.isArray(lastAssistantMessage.thinkingSteps)
-            ? lastAssistantMessage.thinkingSteps
-            : [];
-          set({ thinkingSteps: steps });
-        }
-
-        // Load generated code
-        if (lastAssistantMessage.generatedCode) {
-          set({ generatedCode: lastAssistantMessage.generatedCode });
-        }
-      }
+      set({
+        conversationHistory: history,
+        generatedCode: lastAssistantMessage?.generatedCode || null,
+        thinkingSteps: lastAssistantMessage?.thinkingSteps || [],
+      });
 
       console.log('✅ Conversation loaded successfully');
     } catch (error) {
@@ -202,3 +245,5 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
     }
   },
 }));
+
+export type { ConversationMessage };
