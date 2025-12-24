@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { anthropic, MODEL, MAX_TOKENS } from '@/lib/ai/anthropic';
 import { SYSTEM_PROMPT } from '@/lib/ai/prompts';
 import { parseThinkingSteps, extractCode, detectLanguageAndFramework } from '@/lib/ai/streaming';
-import { createMessage, createArtifact } from '@/lib/db/queries';
+import { createMessage, createArtifact, getMessages } from '@/lib/db/queries';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,22 +19,60 @@ export async function POST(req: NextRequest) {
     }
 
     console.log('🚀 [API] Starting generation for prompt:', prompt.substring(0, 50));
+    console.log('💬 [API] Conversation ID:', conversationId);
 
     const encoder = new TextEncoder();
 
     const stream = new ReadableStream({
       async start(controller) {
         try {
+          // Build message history
+          const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [];
+
+          // Load previous messages if continuing a conversation
+          if (conversationId) {
+            const previousMessages = await getMessages(conversationId);
+            console.log('📚 [API] Loaded previous messages:', previousMessages.length);
+
+            // Add previous messages to context (only content, not thinking steps)
+            for (const msg of previousMessages) {
+              if (msg.role === 'user') {
+                messages.push({
+                  role: 'user',
+                  content: msg.content,
+                });
+              } else if (msg.role === 'assistant' && msg.generatedCode) {
+                // For assistant messages, include the generated code in context
+                messages.push({
+                  role: 'assistant',
+                  content: msg.generatedCode,
+                });
+              }
+            }
+          }
+
+          // Add current user message
+          messages.push({
+            role: 'user',
+            content: prompt,
+          });
+
+          console.log('📨 [API] Total messages in context:', messages.length);
+
+          // Save user message to database
+          if (conversationId) {
+            await createMessage({
+              conversationId,
+              role: 'user',
+              content: prompt,
+            });
+          }
+
           // Create stream with Anthropic
           const messageStream = await anthropic.messages.stream({
             model: MODEL,
             max_tokens: MAX_TOKENS,
-            messages: [
-              {
-                role: 'user',
-                content: prompt,
-              },
-            ],
+            messages,
             system: SYSTEM_PROMPT,
           });
 
