@@ -1,0 +1,75 @@
+// Prisma Schema for AI Builder MVP
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(uuid()) @db.Uuid
+  name          String         @db.VarChar(255)
+  email         String         @unique @db.VarChar(255)
+  avatarUrl     String?        @map("avatar_url") @db.Text
+  credits       Int            @default(100)
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt     DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  conversations Conversation[]
+
+  @@map("users")
+}
+
+model Conversation {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  title     String    @db.VarChar(255)
+  status    String    @default("active") @db.VarChar(50)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  Message[]
+  artifacts Artifact[]
+
+  @@index([userId], name: "idx_conversations_user_id")
+  @@index([createdAt(sort: Desc)], name: "idx_conversations_created_at")
+  @@map("conversations")
+}
+
+model Message {
+  id             String       @id @default(uuid()) @db.Uuid
+  conversationId String       @map("conversation_id") @db.Uuid
+  role           String       @db.VarChar(50)
+  content        String       @db.Text
+  thinkingSteps  Json?        @map("thinking_steps") @db.JsonB
+  generatedCode  String?      @map("generated_code") @db.Text
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamp(6)
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  artifacts      Artifact[]
+
+  @@index([conversationId], name: "idx_messages_conversation_id")
+  @@index([createdAt], name: "idx_messages_created_at")
+  @@map("messages")
+}
+
+model Artifact {
+  id             String       @id @default(uuid()) @db.Uuid
+  conversationId String       @map("conversation_id") @db.Uuid
+  messageId      String       @map("message_id") @db.Uuid
+  code           String       @db.Text
+  language       String       @db.VarChar(50)
+  framework      String?      @db.VarChar(50)
+  dependencies   Json?        @db.JsonB
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamp(6)
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  message        Message      @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId], name: "idx_artifacts_conversation_id")
+  @@map("artifacts")
+}
