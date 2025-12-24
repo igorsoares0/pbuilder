@@ -16,6 +16,38 @@ export async function getUser(id: string): Promise<User | null> {
   }
 }
 
+export async function getUserByEmail(email: string): Promise<User | null> {
+  try {
+    return await prisma.user.findUnique({
+      where: { email },
+    });
+  } catch (error) {
+    console.error('Error getting user by email:', error);
+    return null;
+  }
+}
+
+export async function createUser(data: {
+  email: string;
+  name: string;
+  password?: string;
+  provider?: string;
+}): Promise<User | null> {
+  try {
+    return await prisma.user.create({
+      data: {
+        email: data.email,
+        name: data.name,
+        passwordHash: data.password,
+        credits: 80, // Initial credits
+      },
+    });
+  } catch (error) {
+    console.error('Error creating user:', error);
+    return null;
+  }
+}
+
 export async function getMockUser(): Promise<User | null> {
   return getUser(MOCK_USER_ID);
 }
