@@ -28,7 +28,7 @@ IMPORTANT CODE RULES:
 - ALWAYS include the code block with \`\`\`tsx
 - No external dependencies beyond React/Next.js built-ins
 
-AVAILABLE ICONS (use these directly, no imports needed):
+AVAILABLE ICONS (import from @/components/ui/Icons):
 - HeartIcon, StarIcon, UserIcon, ChartIcon, BellIcon
 - MenuIcon, SearchIcon, XIcon, CheckIcon, ArrowRightIcon
 - MailIcon, PhoneIcon
@@ -39,6 +39,7 @@ EXAMPLE STRUCTURE:
 'use client';
 
 import { useState } from 'react';
+import { HeartIcon, StarIcon } from '@/components/ui/Icons';
 
 export default function MyComponent() {
   const [count, setCount] = useState(0);

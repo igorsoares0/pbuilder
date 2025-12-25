@@ -34,7 +34,8 @@ export function PreviewFrame({ code }: PreviewFrameProps) {
             // Remove 'use client' and 'use server' directives
             .replace(/^['"]use client['"];?\s*/gm, '')
             .replace(/^['"]use server['"];?\s*/gm, '')
-            // Remove all import statements
+            // Remove all import statements (including icon imports)
+            .replace(/import\s+{[^}]*}\s+from\s+['"]@\/components\/ui\/Icons['"];?\s*/g, '')
             .replace(/import\s+{[^}]*}\s+from\s+['"][^'"]+['"];?\s*/g, '')
             .replace(/import\s+\w+\s+from\s+['"][^'"]+['"];?\s*/g, '')
             .replace(/import\s+['"][^'"]+['"];?\s*/g, '')

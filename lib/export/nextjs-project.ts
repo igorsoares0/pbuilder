@@ -25,7 +25,8 @@ export async function generateNextJsProject(pageCode: string): Promise<Blob> {
       '@types/react': '^18',
       '@types/react-dom': '^18',
       postcss: '^8',
-      tailwindcss: '^4.0.0',
+      tailwindcss: '^3.4.1',
+      autoprefixer: '^10.4.17',
       eslint: '^8',
       'eslint-config-next': '^15.1.3',
     },
@@ -104,6 +105,7 @@ export default config;
 const config = {
   plugins: {
     tailwindcss: {},
+    autoprefixer: {},
   },
 };
 
@@ -186,6 +188,106 @@ body {
 
   zip.file('app/globals.css', globalsCss);
 
+  // components/ui/Icons.tsx
+  const iconsCode = `export function HeartIcon({ className = "w-6 h-6", ...props }: { className?: string; [key: string]: any }) {
+  return (
+    <svg className={className} {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+    </svg>
+  );
+}
+
+export function StarIcon({ className = "w-6 h-6", ...props }: { className?: string; [key: string]: any }) {
+  return (
+    <svg className={className} {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+    </svg>
+  );
+}
+
+export function UserIcon({ className = "w-6 h-6", ...props }: { className?: string; [key: string]: any }) {
+  return (
+    <svg className={className} {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    </svg>
+  );
+}
+
+export function ChartIcon({ className = "w-6 h-6", ...props }: { className?: string; [key: string]: any }) {
+  return (
+    <svg className={className} {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+    </svg>
+  );
+}
+
+export function BellIcon({ className = "w-6 h-6", ...props }: { className?: string; [key: string]: any }) {
+  return (
+    <svg className={className} {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+    </svg>
+  );
+}
+
+export function MenuIcon({ className = "w-6 h-6", ...props }: { className?: string; [key: string]: any }) {
+  return (
+    <svg className={className} {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+  );
+}
+
+export function SearchIcon({ className = "w-6 h-6", ...props }: { className?: string; [key: string]: any }) {
+  return (
+    <svg className={className} {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    </svg>
+  );
+}
+
+export function XIcon({ className = "w-6 h-6", ...props }: { className?: string; [key: string]: any }) {
+  return (
+    <svg className={className} {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  );
+}
+
+export function CheckIcon({ className = "w-6 h-6", ...props }: { className?: string; [key: string]: any }) {
+  return (
+    <svg className={className} {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+    </svg>
+  );
+}
+
+export function ArrowRightIcon({ className = "w-6 h-6", ...props }: { className?: string; [key: string]: any }) {
+  return (
+    <svg className={className} {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+    </svg>
+  );
+}
+
+export function MailIcon({ className = "w-6 h-6", ...props }: { className?: string; [key: string]: any }) {
+  return (
+    <svg className={className} {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+    </svg>
+  );
+}
+
+export function PhoneIcon({ className = "w-6 h-6", ...props }: { className?: string; [key: string]: any }) {
+  return (
+    <svg className={className} {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+    </svg>
+  );
+}
+`;
+
+  zip.file('components/ui/Icons.tsx', iconsCode);
+
   // .gitignore
   const gitignore = `# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
@@ -236,7 +338,7 @@ This is a [Next.js](https://nextjs.org) project generated by AI Builder.
 
 First, install the dependencies:
 
-\`\`\bash
+\`\`\`bash
 npm install
 # or
 yarn install
@@ -246,7 +348,7 @@ pnpm install
 
 Then, run the development server:
 
-\`\`\bash
+\`\`\`bash
 npm run dev
 # or
 yarn dev
@@ -258,12 +360,52 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying \`app/page.tsx\`. The page auto-updates as you edit the file.
 
+## Tech Stack
+
+- **Framework:** Next.js 15 (App Router)
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS v3
+- **Fonts:** Geist Sans & Geist Mono (Google Fonts)
+
+## Project Structure
+
+\`\`\`
+├── app/
+│   ├── layout.tsx          # Root layout with fonts
+│   ├── page.tsx            # Your generated component
+│   └── globals.css         # Global styles with Tailwind
+├── components/
+│   └── ui/
+│       └── Icons.tsx       # Icon components (HeartIcon, StarIcon, etc.)
+├── public/                 # Static assets
+├── next.config.ts          # Next.js configuration
+├── tailwind.config.ts      # Tailwind configuration
+└── tsconfig.json           # TypeScript configuration
+\`\`\`
+
+## Available Icons
+
+The project includes 12 pre-built icon components in \`components/ui/Icons.tsx\`:
+
+- HeartIcon, StarIcon, UserIcon
+- ChartIcon, BellIcon, MenuIcon
+- SearchIcon, XIcon, CheckIcon
+- ArrowRightIcon, MailIcon, PhoneIcon
+
+**Usage:**
+\`\`\`tsx
+import { HeartIcon, StarIcon } from '@/components/ui/Icons';
+
+<HeartIcon className="w-6 h-6 text-red-500" />
+\`\`\`
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
 
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
 - [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs) - utility-first CSS framework.
 
 ## Deploy on Vercel
 
@@ -280,6 +422,9 @@ Check out the [Next.js deployment documentation](https://nextjs.org/docs/app/bui
   };
 
   zip.file('.eslintrc.json', JSON.stringify(eslintConfig, null, 2));
+
+  // Create public directory with a .gitkeep file
+  zip.file('public/.gitkeep', '');
 
   // Generate zip file
   const blob = await zip.generateAsync({ type: 'blob' });
