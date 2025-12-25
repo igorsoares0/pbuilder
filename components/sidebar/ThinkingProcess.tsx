@@ -60,15 +60,6 @@ export function ThinkingProcess() {
                 </div>
               )}
 
-              {/* Message Content (thinking text, excluding code blocks) - NO background box */}
-              {message.content && (
-                <div className="mb-2">
-                  <div className="text-sm text-[#161413] whitespace-pre-wrap" style={{ fontFamily: 'Geist, sans-serif' }}>
-                    {message.content.split('```')[0]}
-                  </div>
-                </div>
-              )}
-
               {/* Code Generated Indicator */}
               {message.generatedCode && (
                 <div className="bg-[#e5f5e5] border-[1.4px] border-[#161413] rounded-md p-2">
@@ -98,17 +89,6 @@ export function ThinkingProcess() {
               {thinkingSteps.map((step) => (
                 <ThinkingStep key={step.id} step={step} />
               ))}
-            </div>
-          )}
-
-          {/* Streaming Text Content - NO background box */}
-          {streamingContent && (
-            <div>
-              <div className="text-sm text-[#161413] whitespace-pre-wrap" style={{ fontFamily: 'Geist, sans-serif' }}>
-                {/* Show only the thinking part, hide code blocks */}
-                {streamingContent.split('```')[0]}
-                <span className="inline-block w-[2px] h-4 bg-[#f27b2f] ml-1 animate-blink" />
-              </div>
             </div>
           )}
         </div>
