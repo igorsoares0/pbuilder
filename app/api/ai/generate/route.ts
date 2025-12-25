@@ -88,6 +88,15 @@ export async function POST(req: NextRequest) {
               fullContent += text;
               currentSection += text;
 
+              // Stream ALL text content in real-time
+              const textData = {
+                type: 'text',
+                content: text,
+              };
+              controller.enqueue(
+                encoder.encode(`data: ${JSON.stringify(textData)}\n\n`)
+              );
+
               // Check if we just completed a section
               if (text.includes('## ')) {
                 const sections = currentSection.split('## ');
@@ -109,17 +118,6 @@ export async function POST(req: NextRequest) {
                   }
                   currentSection = '## ' + sections[sections.length - 1];
                 }
-              }
-
-              // Stream code content
-              if (fullContent.includes('```')) {
-                const data = {
-                  type: 'code',
-                  content: text,
-                };
-                controller.enqueue(
-                  encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
-                );
               }
             }
           }

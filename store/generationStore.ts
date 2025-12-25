@@ -139,17 +139,17 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
           if (line.startsWith('data: ')) {
             try {
               const data = JSON.parse(line.slice(6));
-              console.log('📦 Received data:', data.type, data);
 
-              if (data.type === 'thinking' && data.step) {
+              if (data.type === 'text') {
+                // Stream text content in real-time
+                set((state) => ({
+                  streamingContent: state.streamingContent + data.content,
+                }));
+              } else if (data.type === 'thinking' && data.step) {
                 console.log('💭 Adding thinking step:', data.step.title);
                 set((state) => ({
                   thinkingSteps: [...state.thinkingSteps, data.step],
                   currentStep: data.step,
-                }));
-              } else if (data.type === 'code') {
-                set((state) => ({
-                  streamingContent: state.streamingContent + data.content,
                 }));
               } else if (data.type === 'complete') {
                 console.log('✨ Generation complete! Code length:', data.content?.length);
@@ -158,7 +158,7 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
                 const assistantMessage: ConversationMessage = {
                   id: `temp-assistant-${Date.now()}`,
                   role: 'assistant',
-                  content: data.content,
+                  content: get().streamingContent, // Use the full streamed content
                   thinkingSteps: get().thinkingSteps,
                   generatedCode: data.content,
                   createdAt: new Date(),
@@ -169,6 +169,7 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
                   generatedCode: data.content,
                   isGenerating: false,
                   currentStep: null,
+                  streamingContent: '', // Clear streaming content
                 }));
               } else if (data.type === 'error') {
                 console.error('❌ Error from API:', data.content);

@@ -6,14 +6,14 @@ import { ThinkingStep } from './ThinkingStep';
 import { BrainIcon } from '@/components/ui/Icons';
 
 export function ThinkingProcess() {
-  const { conversationHistory, thinkingSteps, isGenerating } = useGenerationStore();
+  const { conversationHistory, thinkingSteps, isGenerating, streamingContent } = useGenerationStore();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [conversationHistory, thinkingSteps]);
+  }, [conversationHistory, thinkingSteps, streamingContent]);
 
   if (conversationHistory.length === 0 && !isGenerating) {
     return (
@@ -53,16 +53,25 @@ export function ThinkingProcess() {
 
               {/* Thinking Steps */}
               {message.thinkingSteps && message.thinkingSteps.length > 0 && (
-                <div className="space-y-2">
+                <div className="space-y-2 mb-3">
                   {message.thinkingSteps.map((step) => (
                     <ThinkingStep key={step.id} step={step} />
                   ))}
                 </div>
               )}
 
+              {/* Message Content (thinking text, excluding code blocks) - NO background box */}
+              {message.content && (
+                <div className="mb-2">
+                  <div className="text-sm text-[#161413] whitespace-pre-wrap" style={{ fontFamily: 'Geist, sans-serif' }}>
+                    {message.content.split('```')[0]}
+                  </div>
+                </div>
+              )}
+
               {/* Code Generated Indicator */}
               {message.generatedCode && (
-                <div className="mt-2 bg-[#e5f5e5] border-[1.4px] border-[#161413] rounded-md p-2">
+                <div className="bg-[#e5f5e5] border-[1.4px] border-[#161413] rounded-md p-2">
                   <p className="text-xs text-[#161413]" style={{ fontFamily: 'Geist Mono, monospace' }}>
                     ✓ Code generated ({message.generatedCode.length} chars)
                   </p>
@@ -74,16 +83,34 @@ export function ThinkingProcess() {
       ))}
 
       {/* Current generation in progress */}
-      {isGenerating && thinkingSteps.length > 0 && (
+      {isGenerating && (
         <div>
           <div className="text-xs font-semibold text-[#161413] mb-2" style={{ fontFamily: 'Geist Mono, monospace' }}>
-            AI ASSISTANT (generating...)
+            AI ASSISTANT
+            <span className="ml-2 inline-flex items-center">
+              <span className="animate-pulse">●</span>
+            </span>
           </div>
-          <div className="space-y-2">
-            {thinkingSteps.map((step) => (
-              <ThinkingStep key={step.id} step={step} />
-            ))}
-          </div>
+
+          {/* Thinking Steps */}
+          {thinkingSteps.length > 0 && (
+            <div className="space-y-2 mb-3">
+              {thinkingSteps.map((step) => (
+                <ThinkingStep key={step.id} step={step} />
+              ))}
+            </div>
+          )}
+
+          {/* Streaming Text Content - NO background box */}
+          {streamingContent && (
+            <div>
+              <div className="text-sm text-[#161413] whitespace-pre-wrap" style={{ fontFamily: 'Geist, sans-serif' }}>
+                {/* Show only the thinking part, hide code blocks */}
+                {streamingContent.split('```')[0]}
+                <span className="inline-block w-[2px] h-4 bg-[#f27b2f] ml-1 animate-blink" />
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
