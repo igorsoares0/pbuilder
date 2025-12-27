@@ -10,6 +10,10 @@ interface ConversationMessage {
   createdAt: Date;
 }
 
+interface ProjectFiles {
+  [path: string]: string;
+}
+
 interface GenerationStore {
   // State
   isGenerating: boolean;
@@ -19,6 +23,7 @@ interface GenerationStore {
   generatedCode: string | null;
   error: string | null;
   conversationHistory: ConversationMessage[];
+  projectFiles: ProjectFiles;
 
   // Actions
   setGenerating: (isGenerating: boolean) => void;
@@ -33,6 +38,8 @@ interface GenerationStore {
   setConversationHistory: (history: ConversationMessage[]) => void;
   addMessageToHistory: (message: ConversationMessage) => void;
   resetGeneration: () => void;
+  updateProjectFile: (path: string, content: string) => void;
+  setProjectFiles: (files: ProjectFiles) => void;
 
   // Async actions
   startGeneration: (prompt: string, conversationId?: string) => Promise<void>;
@@ -48,6 +55,7 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
   generatedCode: null,
   error: null,
   conversationHistory: [],
+  projectFiles: {},
 
   // Sync actions
   setGenerating: (isGenerating) => set({ isGenerating }),
@@ -74,6 +82,11 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
     set((state) => ({
       conversationHistory: [...state.conversationHistory, message],
     })),
+  updateProjectFile: (path, content) =>
+    set((state) => ({
+      projectFiles: { ...state.projectFiles, [path]: content },
+    })),
+  setProjectFiles: (files) => set({ projectFiles: files }),
   resetGeneration: () =>
     set({
       isGenerating: false,
@@ -83,6 +96,7 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
       generatedCode: null,
       error: null,
       conversationHistory: [],
+      projectFiles: {},
     }),
 
   // Async actions
@@ -247,4 +261,4 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
   },
 }));
 
-export type { ConversationMessage };
+export type { ConversationMessage, ProjectFiles };

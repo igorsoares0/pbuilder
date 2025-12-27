@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { XIcon } from '@/components/ui/Icons';
-import { useUIStore } from '@/store';
+import { useUIStore, useGenerationStore } from '@/store';
 import toast from 'react-hot-toast';
 
 interface CodeEditorProps {
@@ -18,12 +18,14 @@ interface FileNode {
 
 export function CodeEditor({ code }: CodeEditorProps) {
   const { toggleCodeEditor } = useUIStore();
+  const { projectFiles, updateProjectFile, setProjectFiles, setGeneratedCode } = useGenerationStore();
   const [copied, setCopied] = useState(false);
   const [selectedFile, setSelectedFile] = useState('app/page.tsx');
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['app', 'components']));
+  const [hasChanges, setHasChanges] = useState(false);
 
-  // File contents mapping
-  const fileContents: Record<string, string> = {
+  // Default file contents
+  const defaultFileContents: Record<string, string> = {
     'app/page.tsx': code,
     'app/layout.tsx': `import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
@@ -148,12 +150,41 @@ body {
 }`,
   };
 
-  const [editedCode, setEditedCode] = useState(fileContents[selectedFile] || code);
+  // Initialize project files if empty
+  useEffect(() => {
+    if (Object.keys(projectFiles).length === 0) {
+      setProjectFiles(defaultFileContents);
+    }
+  }, []);
+
+  // Get current file content from store or default
+  const currentFileContent = projectFiles[selectedFile] || defaultFileContents[selectedFile] || '// File content not available';
+  const [editedCode, setEditedCode] = useState(currentFileContent);
 
   // Update editedCode when selectedFile changes
   const handleFileSelect = (path: string) => {
     setSelectedFile(path);
-    setEditedCode(fileContents[path] || '// File content not available');
+    const content = projectFiles[path] || defaultFileContents[path] || '// File content not available';
+    setEditedCode(content);
+  };
+
+  // Handle code changes
+  const handleCodeChange = (newCode: string) => {
+    setEditedCode(newCode);
+    setHasChanges(true);
+  };
+
+  // Apply changes to store
+  const handleApplyChanges = () => {
+    updateProjectFile(selectedFile, editedCode);
+
+    // If editing page.tsx, also update the main generatedCode for preview
+    if (selectedFile === 'app/page.tsx') {
+      setGeneratedCode(editedCode);
+    }
+
+    setHasChanges(false);
+    toast.success('Changes applied successfully!');
   };
 
   // Create file tree structure
@@ -267,6 +298,15 @@ body {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          {hasChanges && (
+            <button
+              onClick={handleApplyChanges}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-medium"
+              style={{ fontFamily: 'Geist, sans-serif' }}
+            >
+              Apply Changes
+            </button>
+          )}
           <button
             onClick={handleCopy}
             className="px-4 py-2 bg-[#f27b2f] text-white rounded-md hover:opacity-90 transition-opacity text-sm font-medium"
@@ -330,7 +370,7 @@ body {
             <div className="flex-1 overflow-auto">
               <textarea
                 value={editedCode}
-                onChange={(e) => setEditedCode(e.target.value)}
+                onChange={(e) => handleCodeChange(e.target.value)}
                 className="w-full h-full p-4 font-mono text-sm text-[#161413] resize-none focus:outline-none bg-white"
                 style={{
                   fontFamily: 'Geist Mono, monospace',

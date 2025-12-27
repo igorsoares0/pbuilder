@@ -1,6 +1,10 @@
 import JSZip from 'jszip';
 
-export async function generateNextJsProject(pageCode: string): Promise<Blob> {
+interface ProjectFiles {
+  [path: string]: string;
+}
+
+export async function generateNextJsProject(pageCode: string, projectFiles?: ProjectFiles): Promise<Blob> {
   const zip = new JSZip();
 
   // package.json
@@ -32,37 +36,42 @@ export async function generateNextJsProject(pageCode: string): Promise<Blob> {
     },
   };
 
-  zip.file('package.json', JSON.stringify(packageJson, null, 2));
+  // package.json - use edited version if available
+  const packageContent = projectFiles?.['package.json'] || JSON.stringify(packageJson, null, 2);
+  zip.file('package.json', packageContent);
 
-  // tsconfig.json
-  const tsConfig = {
-    compilerOptions: {
-      lib: ['dom', 'dom.iterable', 'esnext'],
-      allowJs: true,
-      skipLibCheck: true,
-      strict: true,
-      noEmit: true,
-      esModuleInterop: true,
-      module: 'esnext',
-      moduleResolution: 'bundler',
-      resolveJsonModule: true,
-      isolatedModules: true,
-      jsx: 'preserve',
-      incremental: true,
-      plugins: [
-        {
-          name: 'next',
+  // tsconfig.json - use edited version if available
+  if (projectFiles?.['tsconfig.json']) {
+    zip.file('tsconfig.json', projectFiles['tsconfig.json']);
+  } else {
+    const tsConfig = {
+      compilerOptions: {
+        lib: ['dom', 'dom.iterable', 'esnext'],
+        allowJs: true,
+        skipLibCheck: true,
+        strict: true,
+        noEmit: true,
+        esModuleInterop: true,
+        module: 'esnext',
+        moduleResolution: 'bundler',
+        resolveJsonModule: true,
+        isolatedModules: true,
+        jsx: 'preserve',
+        incremental: true,
+        plugins: [
+          {
+            name: 'next',
+          },
+        ],
+        paths: {
+          '@/*': ['./*'],
         },
-      ],
-      paths: {
-        '@/*': ['./*'],
       },
-    },
-    include: ['next-env.d.ts', '**/*.ts', '**/*.tsx', '.next/types/**/*.ts'],
-    exclude: ['node_modules'],
-  };
-
-  zip.file('tsconfig.json', JSON.stringify(tsConfig, null, 2));
+      include: ['next-env.d.ts', '**/*.ts', '**/*.tsx', '.next/types/**/*.ts'],
+      exclude: ['node_modules'],
+    };
+    zip.file('tsconfig.json', JSON.stringify(tsConfig, null, 2));
+  }
 
   // next.config.ts
   const nextConfig = `import type { NextConfig } from "next";
@@ -76,8 +85,11 @@ export default nextConfig;
 
   zip.file('next.config.ts', nextConfig);
 
-  // tailwind.config.ts
-  const tailwindConfig = `import type { Config } from "tailwindcss";
+  // tailwind.config.ts - use edited version if available
+  if (projectFiles?.['tailwind.config.ts']) {
+    zip.file('tailwind.config.ts', projectFiles['tailwind.config.ts']);
+  } else {
+    const tailwindConfig = `import type { Config } from "tailwindcss";
 
 const config: Config = {
   content: [
@@ -97,8 +109,8 @@ const config: Config = {
 };
 export default config;
 `;
-
-  zip.file('tailwind.config.ts', tailwindConfig);
+    zip.file('tailwind.config.ts', tailwindConfig);
+  }
 
   // postcss.config.mjs
   const postcssConfig = `/** @type {import('postcss-load-config').Config} */
@@ -151,13 +163,14 @@ export default function RootLayout({
 }
 `;
 
-  zip.file('app/layout.tsx', layoutCode);
+  // app/layout.tsx - use edited version if available
+  zip.file('app/layout.tsx', projectFiles?.['app/layout.tsx'] || layoutCode);
 
-  // app/page.tsx (the generated code)
-  zip.file('app/page.tsx', pageCode);
+  // app/page.tsx - use edited version if available
+  zip.file('app/page.tsx', projectFiles?.['app/page.tsx'] || pageCode);
 
-  // app/globals.css
-  const globalsCss = `@tailwind base;
+  // app/globals.css - use edited version if available
+  const globalsCss = projectFiles?.['app/globals.css'] || `@tailwind base;
 @tailwind components;
 @tailwind utilities;
 

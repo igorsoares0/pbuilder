@@ -14,7 +14,7 @@ import toast from 'react-hot-toast';
 import { generateNextJsProject } from '@/lib/export/nextjs-project';
 
 export function PreviewToolbar() {
-  const { generatedCode } = useGenerationStore();
+  const { generatedCode, projectFiles } = useGenerationStore();
   const { toggleCodeEditor } = useUIStore();
   const [showCode, setShowCode] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -63,7 +63,8 @@ export function PreviewToolbar() {
       setShowExportMenu(false);
       toast.loading('Generating project...', { id: 'export-project' });
 
-      const blob = await generateNextJsProject(generatedCode);
+      // Pass projectFiles to include edited files in the ZIP
+      const blob = await generateNextJsProject(generatedCode, projectFiles);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
