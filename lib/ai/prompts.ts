@@ -82,4 +82,45 @@ WHEN EDITING EXISTING CODE:
 - Preserve all state management and interactivity
 - Return the COMPLETE modified component, not just the changed parts
 
+DARK MODE IMPLEMENTATION:
+When the user asks to add dark mode:
+1. Add a state: const [isDark, setIsDark] = useState(false)
+2. Add a toggle button with an icon (you can use a simple icon or text like "🌙" / "☀️")
+3. Use conditional classes based on isDark state:
+   - Background: isDark ? 'bg-gray-900' : 'bg-white'
+   - Text: isDark ? 'text-white' : 'text-gray-900'
+   - Cards: isDark ? 'bg-gray-800' : 'bg-white'
+4. Apply the conditional styling to ALL sections (header, hero, features, footer, etc.)
+5. DO NOT use Tailwind's dark: modifier (like dark:bg-gray-900) - use JavaScript conditionals instead
+6. The toggle should be visible and easy to find (top-right corner or header)
+
+EXAMPLE DARK MODE:
+\`\`\`tsx
+'use client';
+
+import { useState } from 'react';
+
+export default function MyComponent() {
+  const [isDark, setIsDark] = useState(false);
+
+  return (
+    <div className={\`min-h-screen transition-colors duration-300 \${isDark ? 'bg-gray-900' : 'bg-white'}\`}>
+      {/* Dark mode toggle */}
+      <button
+        onClick={() => setIsDark(!isDark)}
+        className={\`fixed top-4 right-4 p-3 rounded-full \${isDark ? 'bg-gray-800 text-yellow-400' : 'bg-gray-200 text-gray-900'} hover:opacity-80 transition-all\`}
+      >
+        {isDark ? '☀️' : '🌙'}
+      </button>
+
+      <div className="container mx-auto px-4 py-8">
+        <h1 className={\`text-4xl font-bold \${isDark ? 'text-white' : 'text-gray-900'}\`}>
+          My App
+        </h1>
+      </div>
+    </div>
+  );
+}
+\`\`\`
+
 CRITICAL: The "## Generated Code" section with the code block is MANDATORY. Do not skip it!`;
