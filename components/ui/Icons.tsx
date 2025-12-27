@@ -65,3 +65,10 @@ export const BrainIcon = ({ className = "w-6 h-6" }: { className?: string }) => 
     <path d="M19.967 17.484A4 4 0 0 1 18 18" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
+
+export const XIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">
+    <line x1="18" y1="6" x2="6" y2="18" strokeLinecap="round" strokeLinejoin="round"/>
+    <line x1="6" y1="6" x2="18" y2="18" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);

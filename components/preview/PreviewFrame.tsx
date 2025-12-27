@@ -74,8 +74,15 @@ export function PreviewFrame({ code }: PreviewFrameProps) {
               </head>
               <body>
                 <div id="root"></div>
-                <script type="text/babel">
-                  const { useState, useEffect, useRef, useCallback, useMemo } = React;
+                <script type="text/babel" data-type="module">
+                  (function() {
+                    // Wait for React to load
+                    if (typeof React === 'undefined' || typeof ReactDOM === 'undefined') {
+                      console.error('React is not loaded');
+                      return;
+                    }
+
+                    const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
                   // Common Icon Components
                   const HeartIcon = ({ className = "w-6 h-6", ...props }) => (
@@ -154,6 +161,7 @@ export function PreviewFrame({ code }: PreviewFrameProps) {
 
                   const root = ReactDOM.createRoot(document.getElementById('root'));
                   root.render(<${componentName} />);
+                  })();
                 </script>
               </body>
             </html>

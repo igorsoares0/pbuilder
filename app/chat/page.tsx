@@ -10,11 +10,13 @@ import { ThinkingProcess } from '@/components/sidebar/ThinkingProcess';
 import { UserInfo } from '@/components/sidebar/UserInfo';
 import { PreviewFrame } from '@/components/preview/PreviewFrame';
 import { PreviewToolbar } from '@/components/preview/PreviewToolbar';
-import { useGenerationStore } from '@/store';
+import { CodeEditor } from '@/components/preview/CodeEditor';
+import { useGenerationStore, useUIStore } from '@/store';
 import toast from 'react-hot-toast';
 
 export default function ChatPage() {
   const { generatedCode, startGeneration, loadConversation, resetGeneration } = useGenerationStore();
+  const { showCodeEditor } = useUIStore();
   const searchParams = useSearchParams();
   const router = useRouter();
   const hasProcessedPrompt = useRef(false);
@@ -102,7 +104,11 @@ export default function ChatPage() {
           <PreviewToolbar />
           <div className="h-full p-8 pt-20">
             <div className="h-full border-[1.4px] border-[#161413] bg-white rounded-sm overflow-hidden">
-              <PreviewFrame code={generatedCode || ''} />
+              {showCodeEditor ? (
+                <CodeEditor code={generatedCode || ''} />
+              ) : (
+                <PreviewFrame code={generatedCode || ''} />
+              )}
             </div>
           </div>
         </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useGenerationStore } from '@/store';
+import { useGenerationStore, useUIStore } from '@/store';
 import {
   EyeIcon,
   CodeIcon,
@@ -15,19 +15,13 @@ import { generateNextJsProject } from '@/lib/export/nextjs-project';
 
 export function PreviewToolbar() {
   const { generatedCode } = useGenerationStore();
+  const { toggleCodeEditor } = useUIStore();
   const [showCode, setShowCode] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
 
-  const handleCopy = async () => {
+  const handleOpenCodeEditor = () => {
     if (!generatedCode) return;
-
-    try {
-      await navigator.clipboard.writeText(generatedCode);
-      toast.success('Code copied to clipboard!');
-    } catch (error) {
-      toast.error('Failed to copy code');
-      console.error('Copy error:', error);
-    }
+    toggleCodeEditor();
   };
 
   const handleExportComponent = async () => {
@@ -135,8 +129,15 @@ export function PreviewToolbar() {
 </head>
 <body>
   <div id="root"></div>
-  <script type="text/babel">
-    const { useState, useEffect, useRef, useCallback, useMemo } = React;
+  <script type="text/babel" data-type="module">
+    (function() {
+      // Wait for React to load
+      if (typeof React === 'undefined' || typeof ReactDOM === 'undefined') {
+        console.error('React is not loaded');
+        return;
+      }
+
+      const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
     // Icon Components
     const HeartIcon = ({ className = "w-6 h-6", ...props }) => (
@@ -204,6 +205,7 @@ export function PreviewToolbar() {
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<${componentName} />);
+    })();
   </script>
 </body>
 </html>`;
@@ -240,10 +242,10 @@ export function PreviewToolbar() {
           <EyeIcon className="w-6 h-6" />
         </button>
         <button
-          onClick={handleCopy}
+          onClick={handleOpenCodeEditor}
           disabled={!generatedCode}
           className="text-[#161413] hover:opacity-70 transition-opacity disabled:opacity-30 p-1"
-          title="Copy Code"
+          title="Open Code Editor"
         >
           <CodeIcon className="w-6 h-6" />
         </button>
