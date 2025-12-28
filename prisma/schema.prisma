@@ -25,12 +25,13 @@ model User {
 }
 
 model Conversation {
-  id        String    @id @default(uuid()) @db.Uuid
-  userId    String    @map("user_id") @db.Uuid
-  title     String    @db.VarChar(255)
-  status    String    @default("active") @db.VarChar(50)
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  title       String    @db.VarChar(255)
+  status      String    @default("active") @db.VarChar(50)
+  editedFiles Json?     @map("edited_files") @db.JsonB
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
 
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages  Message[]

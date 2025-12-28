@@ -18,7 +18,7 @@ interface FileNode {
 
 export function CodeEditor({ code }: CodeEditorProps) {
   const { toggleCodeEditor } = useUIStore();
-  const { projectFiles, updateProjectFile, setProjectFiles, setGeneratedCode } = useGenerationStore();
+  const { projectFiles, updateProjectFile, setProjectFiles, setGeneratedCode, saveProjectFiles } = useGenerationStore();
   const [copied, setCopied] = useState(false);
   const [selectedFile, setSelectedFile] = useState('app/page.tsx');
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['app', 'components']));
@@ -175,7 +175,7 @@ body {
   };
 
   // Apply changes to store
-  const handleApplyChanges = () => {
+  const handleApplyChanges = async () => {
     updateProjectFile(selectedFile, editedCode);
 
     // If editing page.tsx, also update the main generatedCode for preview
@@ -184,7 +184,15 @@ body {
     }
 
     setHasChanges(false);
-    toast.success('Changes applied successfully!');
+
+    // Save to database
+    try {
+      await saveProjectFiles();
+      toast.success('Changes applied and saved!');
+    } catch (error) {
+      toast.error('Changes applied but failed to save to database');
+      console.error('Failed to save project files:', error);
+    }
   };
 
   // Create file tree structure

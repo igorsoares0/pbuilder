@@ -24,6 +24,7 @@ interface GenerationStore {
   error: string | null;
   conversationHistory: ConversationMessage[];
   projectFiles: ProjectFiles;
+  currentConversationId: string | null;
 
   // Actions
   setGenerating: (isGenerating: boolean) => void;
@@ -40,6 +41,8 @@ interface GenerationStore {
   resetGeneration: () => void;
   updateProjectFile: (path: string, content: string) => void;
   setProjectFiles: (files: ProjectFiles) => void;
+  setCurrentConversationId: (id: string | null) => void;
+  saveProjectFiles: () => Promise<void>;
 
   // Async actions
   startGeneration: (prompt: string, conversationId?: string) => Promise<void>;
@@ -56,6 +59,7 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
   error: null,
   conversationHistory: [],
   projectFiles: {},
+  currentConversationId: null,
 
   // Sync actions
   setGenerating: (isGenerating) => set({ isGenerating }),
@@ -87,6 +91,31 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
       projectFiles: { ...state.projectFiles, [path]: content },
     })),
   setProjectFiles: (files) => set({ projectFiles: files }),
+  setCurrentConversationId: (id) => set({ currentConversationId: id }),
+  saveProjectFiles: async () => {
+    const { currentConversationId, projectFiles } = get();
+    if (!currentConversationId) {
+      console.error('No conversation ID to save project files');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/conversations/${currentConversationId}/files`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ editedFiles: projectFiles }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save project files');
+      }
+
+      console.log('✅ Project files saved to database');
+    } catch (error) {
+      console.error('❌ Error saving project files:', error);
+      throw error;
+    }
+  },
   resetGeneration: () =>
     set({
       isGenerating: false,
@@ -97,11 +126,17 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
       error: null,
       conversationHistory: [],
       projectFiles: {},
+      currentConversationId: null,
     }),
 
   // Async actions
   startGeneration: async (prompt: string, conversationId?: string) => {
     console.log('🚀 Starting generation with prompt:', prompt);
+
+    // Set current conversation ID
+    if (conversationId) {
+      set({ currentConversationId: conversationId });
+    }
 
     // Add user message to history
     const userMessage: ConversationMessage = {
@@ -218,17 +253,23 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
       generatedCode: null,
       error: null,
       conversationHistory: [],
+      currentConversationId: conversationId,
     });
 
     try {
-      const response = await fetch(`/api/conversations/${conversationId}/messages`);
+      // Load messages
+      const messagesResponse = await fetch(`/api/conversations/${conversationId}/messages`);
 
-      if (!response.ok) {
+      if (!messagesResponse.ok) {
         throw new Error('Failed to load conversation');
       }
 
-      const messages = await response.json();
+      const messages = await messagesResponse.json();
       console.log('📨 Loaded messages:', messages.length);
+
+      // Load conversation details (including editedFiles)
+      const conversationResponse = await fetch(`/api/conversations/${conversationId}`);
+      const conversationData = await conversationResponse.json();
 
       // Convert messages to conversation history
       const history: ConversationMessage[] = messages.map((msg: any) => ({
@@ -245,13 +286,19 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
         .reverse()
         .find((msg: any) => msg.role === 'assistant' && msg.generatedCode);
 
+      const editedFiles = conversationData?.editedFiles || {};
+
+      // Use edited version of page.tsx if available, otherwise use original
+      const codeForPreview = editedFiles['app/page.tsx'] || lastAssistantMessage?.generatedCode || null;
+
       set({
         conversationHistory: history,
-        generatedCode: lastAssistantMessage?.generatedCode || null,
+        generatedCode: codeForPreview,
         thinkingSteps: lastAssistantMessage?.thinkingSteps || [],
+        projectFiles: editedFiles,
       });
 
-      console.log('✅ Conversation loaded successfully');
+      console.log('✅ Conversation loaded successfully with edited files:', Object.keys(editedFiles).length);
     } catch (error) {
       console.error('❌ Error loading conversation:', error);
       set({
